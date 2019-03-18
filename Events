@@ -1,0 +1,33 @@
+# los eventos se definen como clases vacias que heredan de UnityEvent
+# y se les pueden pasar argumentos
+
+public class Events
+{
+	[System.Serializable] public class EventTurnEnd : UnityEvent<bool> { }
+  [System.Serializable] public class EventGameState : UnityEvent<GameManager.GameState, GameManager.GameState> { } 
+}
+
+
+# una clase que quiera emitir un evento lo declarará así:
+
+public Events.EventGameState OnGameStateChanged;
+
+# y para invocar al evento usamos:
+
+OnGameStateChanged.Invoke(_currentGameState, previousGameState);
+
+# en la clase en dónde queramos detectar el evento debemos también declararlo:
+
+public Events.EventTurnEnd OnTurnEnd;
+
+# y para detectarlo debemos crear un Handler, por ejemplo, en una clase llamada TankManager sería:
+
+TankManager.OnTurnEnd.AddListener(HandleOnTurnEnd);
+
+# y un método que se ejecute al detectar el evento:
+
+void HandleOnTurnEnd(bool _end)
+{
+  ...
+}
+
