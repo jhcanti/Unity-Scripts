@@ -1,0 +1,47 @@
+# con esta clase premitimos que otras clases que extiendan de esta
+# tengan el patron Singleton y puedan acceder a ella desde otra clase.
+# como argumento <T> se le pasa la clase que quiere implementar el
+# patron Singleton
+
+public class Singleton<T> : MonoBehaviour where T : Singleton<T> {
+
+	private static T instance;
+	public static T Instance
+	{
+		get { return instance; }
+	}
+
+	public static bool IsInitialized
+	{
+		get	{ return instance != null; }
+	}
+	
+	protected virtual void Awake()
+	{
+		if (instance != null)
+		{
+			Debug.LogError("[Singleton] Trying to instantiate a second instance of a singleton class.");
+		}
+		else
+		{
+			instance = (T) this;
+		}
+	}
+
+	protected virtual void OnDestroy()
+	{
+		if (instance == this)
+		{
+			instance = null;
+		}
+	}
+}
+
+
+# la declaracion de otra clase que queramos que tenga el patrón Singleton sería:
+
+public class AudioManager : Singleton<AudioManager> {
+}
+
+
+# de esta forma podremos hacer referencia a dicha clase desde cualquier parte del programa
