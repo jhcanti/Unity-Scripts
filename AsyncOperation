@@ -1,0 +1,55 @@
+# Operaciones de carga asíncronas.
+
+# Una lista almacena las operaciones de carga asincronas que estan
+# en cola de ejecución, una vez se finalice la carga se eliminara
+# la operacion de carga de la lista.
+
+List<AsyncOperation> _loadOperations;
+
+# Esta funcion carga la escena indicada por el nombre de modo aditivo,
+# es decir, que no descarga ninguna escena que estuviera cargada
+# previamente sino que añade la escena.
+
+public void LoadLevel(string levelName)
+{		
+	// las operaciones de carga asincrona devuelven una operacion
+	// asincrona que informa del resultado de la operacion
+  
+	AsyncOperation ao = SceneManager.LoadSceneAsync(levelName, LoadSceneMode.Additive);
+
+	// si no ha podido realizarse la operacion de carga se devuelve null
+  
+	if(ao == null)
+	{
+		Debug.LogError("[GameManager] Unable to load level " + levelName);
+		return;
+	}
+
+	// las operaciones asincronas invocan el evento completed cuando
+	// terminan, podemos usar esto para llamar a la funcion
+	// OnLoadOperationComplete y pasarle la operacion como argumento		
+  
+	ao.completed += OnLoadOperationComplete;
+
+	_loadOperations.Add(ao);
+	_currentLevelName = levelName;
+}
+
+# Esta funcion se llama cuando una operacion de carga asincrona
+# se ha completado, si la operacion ya se encontraba en la lista
+# de operaciones en ejecucion la elimina de la lista y si no
+# quedan mas operaciones en la lista se cambia el estado del 
+# juego a RUNNING
+
+void OnLoadOperationComplete(AsyncOperation ao)
+{
+	if(_loadOperations.Contains(ao))
+	{
+		_loadOperations.Remove(ao);
+
+		if (_loadOperations.Count == 0)
+		{			
+			UpdateState(GameState.RUNNING);
+		}						
+	}		
+}
