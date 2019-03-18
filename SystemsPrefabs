@@ -1,0 +1,23 @@
+# Todos los sistemas que queramos crear en nuestro juego, aparte de heredar de la clase Singleton,
+# se pueden cargar en el GameManager al comenzar el juego. Para ello primero debemos crear un prefab
+# de nuestro sistema:
+
+1  creamos un GameObject vacío y le agregamos como componente el script de nuestro Sistema
+2  lo arrastramos a la carpeta prefab.
+
+# En nuestro GameManager creamos un array de GameObjects y una lista de GameObjects
+# en el array cargaremos todos nuestros prefabs y después se instanciaran a la vez
+# que se añaden a la lista.
+
+public GameObject[] SystemPrefabs;
+private List<GameObject> _instancedSystemPrefabs;
+
+void InstantiateSystemPrefabs()
+{
+		GameObject prefabInstance;
+		for	(int i = 0; i < SystemPrefabs.Length; ++i)
+		{
+			prefabInstance = Instantiate(SystemPrefabs[i]);
+			_instancedSystemPrefabs.Add(prefabInstance);
+		}		
+}
