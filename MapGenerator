@@ -1,0 +1,77 @@
+# este script crea una textura de 100x100 pixels mediante la función matemática
+# PerlinNoise
+
+using UnityEngine;
+
+public class MapGenerator : MonoBehaviour {
+    
+    public int width = 100;
+    public int height = 100;
+    public float scale = 8f;
+    
+    // la semilla puede usarse para generar el mismo mapa
+    public int seed;
+    
+    Renderer renderer;
+    
+    // se puede usar una simple clase que contenga los datos de una Region:
+    // nombre, color y altura para después delimitar los biomas por colores
+    public Region[] regions;
+    
+
+    private void Awake()
+    {        
+        renderer = GetComponent<Renderer>();
+        renderer.material.mainTexture.filterMode = FilterMode.Point;
+    }
+
+
+    private void Update()
+    {        
+        renderer.material.mainTexture = GenerateTexture();                
+    }
+
+
+    Texture2D GenerateTexture()
+    {
+        Texture2D texture = new Texture2D(width, height);
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                Color color = CalculateColor(x, y);
+                texture.SetPixel(x, y, color);
+            }
+        }
+
+        texture.Apply();
+        return texture;
+    }
+
+    Color CalculateColor(int x, int y)
+    {
+        Color color = new Color(1, 1, 1);
+
+        System.Random pseudo = new System.Random(seed);
+
+        float offsetX = pseudo.Next(-100000, 100000);
+        float offsetY = pseudo.Next(-100000, 100000);
+
+        float xCoord = (float)x / width * scale + offsetX;
+        float yCoord = (float)y / height * scale + offsetY;
+
+        float sample = Mathf.PerlinNoise(xCoord, yCoord);
+        
+        foreach (Region region in regions)
+        {
+            if (sample <= region.height)
+            {
+                color = region.color;                
+                break;
+            }
+        }
+
+        return color;
+    }
+}
