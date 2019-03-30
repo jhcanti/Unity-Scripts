@@ -1,58 +1,99 @@
 # este script crea una textura de 100x100 pixels mediante la función matemática
-# PerlinNoise
+# PerlinNoise y por cada pixel crea un Sprite de 512x512
 
 using UnityEngine;
 
 public class MapGenerator : MonoBehaviour {
-    
+
     public int width = 100;
     public int height = 100;
-    public float scale = 8f;
-    
-    // la semilla puede usarse para generar el mismo mapa
+    float tileSize = 512 / 100;
+    public float scale = 10f;
     public int seed;
-    
-    Renderer renderer;
-    
-    // se puede usar una simple clase que contenga los datos de una Region:
-    // nombre, color y altura para después delimitar los biomas por colores
     public Region[] regions;
+    [SerializeField] GameObject[,] tiles;
+    public GameObject prefab;
+
+    float time;
     
 
     private void Awake()
-    {        
-        renderer = GetComponent<Renderer>();
-        renderer.material.mainTexture.filterMode = FilterMode.Point;
-    }
-
-
-    private void Update()
-    {        
-        renderer.material.mainTexture = GenerateTexture();                
-    }
-
-
-    Texture2D GenerateTexture()
     {
-        Texture2D texture = new Texture2D(width, height);
+        tiles = new GameObject[width, height];
+        CreateTiles(width, height);        
+    }
 
-        for (int x = 0; x < width; x++)
+
+    void CreateTiles(int _width, int _height)
+    {
+        GameObject tile;        
+        float offset = tileSize / 2;
+        float coodX = (_width - 1) * -offset;
+        float coodY = (_height - 1) * offset;
+        float minCoodX = coodX;
+        float maxCoodX = (_width - 1) * offset;                
+
+        for (int y = 0; y < _height; y++)
         {
-            for (int y = 0; y < height; y++)
+            for (int x = 0; x < _width; x++)
             {
-                Color color = CalculateColor(x, y);
-                texture.SetPixel(x, y, color);
+                Vector2 position = new Vector2(coodX, coodY);
+                tile = Instantiate(prefab, position, Quaternion.identity);
+                tiles[y, x] = tile;                
+                coodX += tileSize;
+                if (coodX > maxCoodX)
+                {
+                    coodX = minCoodX;
+                }
+            }
+
+            coodY -= tileSize;            
+        }
+    }
+
+
+    private void Start()
+    {        
+        int[,] map = GenerateMap();                
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {                
+                foreach (Region region in regions)
+                {
+                    if (region.tileNumber == map[y, x])
+                    {
+                        Sprite tile = region.tile;
+                        tiles[y, x].GetComponent<SpriteRenderer>().sprite = tile;
+                        break;
+                    }                    
+                }                        
             }
         }
-
-        texture.Apply();
-        return texture;
+        
     }
 
-    Color CalculateColor(int x, int y)
-    {
-        Color color = new Color(1, 1, 1);
 
+    int[,] GenerateMap()
+    {
+        int[,] map = new int[width, height];
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                map[y, x] = CalculateTileNumber(x, y);                                
+            }
+        }
+        
+        return map;
+    }
+
+
+    int CalculateTileNumber(int x, int y)
+    {
+        int tileNumber = 0;
         System.Random pseudo = new System.Random(seed);
 
         float offsetX = pseudo.Next(-100000, 100000);
@@ -62,16 +103,23 @@ public class MapGenerator : MonoBehaviour {
         float yCoord = (float)y / height * scale + offsetY;
 
         float sample = Mathf.PerlinNoise(xCoord, yCoord);
+
         
         foreach (Region region in regions)
         {
             if (sample <= region.height)
             {
-                color = region.color;                
+                tileNumber = region.tileNumber;
                 break;
             }
         }
 
-        return color;
+        return tileNumber;
+    }
+
+
+    private void Update()
+    {
+        time += Time.deltaTime;
     }
 }
