@@ -1,0 +1,27 @@
+# Crea un Animator para controlar una animación
+
+public class Animator : MonoBehaviour {
+
+    [SerializeField]Sprite[] walkAnim;
+    SpriteRenderer spriteRenderer;
+    int frame = 0;
+    float frameRate = 1f/24;
+    float timer = 0f;
+
+    private void Awake()
+    {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+
+
+    private void Update()
+    {
+        timer += Time.deltaTime;
+        if (timer > frameRate)
+        {
+            timer = -frameRate;
+            frame = (frame + 1) % walkAnim.Length;
+            spriteRenderer.sprite = walkAnim[frame];
+        }
+    }
+}
