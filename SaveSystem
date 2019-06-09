@@ -1,0 +1,63 @@
+// Sistema de guardado y lectura de un fichero de datos del jugador
+// Los datos a guardar se deben dar de alta como una nueva clase
+// PlayerData
+
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+
+public class SaveSystem : Singleton<SaveSystem> {
+
+    public void SavePlayer(PlayerData _data)
+    {
+        BinaryFormatter formatter = new BinaryFormatter();        
+        string path = Application.persistentDataPath + "/player.bin";
+        FileStream stream = new FileStream(path, FileMode.Create);
+
+        formatter.Serialize(stream, _data);
+        stream.Close();
+    }
+
+
+    public PlayerData LoadPlayer()
+    {
+        string path = Application.persistentDataPath + "/player.bin";        
+        if (File.Exists(path))
+        {
+            BinaryFormatter formatter = new BinaryFormatter();
+            FileStream stream = new FileStream(path, FileMode.Open);
+
+            PlayerData data = formatter.Deserialize(stream) as PlayerData;
+
+            stream.Close();
+            return data;
+        }
+        else
+        {            
+            return null;
+        }
+    }
+	
+}
+
+
+
+// creamos un constructor de la clase PlayerData:
+
+[System.Serializable]
+public class PlayerData {
+
+    public string[] playerName;
+    public int[] playerScore;
+    public int lengthScores;
+    public int positionInScores;
+    public bool resaltar;
+
+    public PlayerData(string[] _name, int[] _score, int _length, int _position, bool _resaltar)
+    {
+        playerName = _name;
+        playerScore = _score;
+        lengthScores = _length;
+        positionInScores = _position;
+        resaltar = _resaltar;
+    }
+}
