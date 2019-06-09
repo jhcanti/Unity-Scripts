@@ -1,0 +1,19 @@
+// este script se puede añadir a un sprite con la forma de cursor para
+// reemplazar al existente por defecto
+
+public class CursorMove : MonoBehaviour {
+
+    Vector2 cursorPos;
+
+    private void Start()
+    {
+        Cursor.visible = false;
+    }
+
+
+    private void Update()
+    {
+        cursorPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        transform.position = cursorPos;
+    }
+}
