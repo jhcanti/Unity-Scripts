@@ -1,0 +1,102 @@
+using UnityEngine;
+
+public class PlayerMovement : MonoBehaviour
+{
+	[Header("Movement Properties")]
+	public float speed = 8f;
+	public float crouchSpeedDivisor = 3f;	//divisor de la velocidad cuando estamos agachados
+	public float coyoteDuration = .05f;		//tiempo de espera hasta poder saltar despues de estar cayendo
+	
+	[Header("Environment Check Properties")]
+	public float footOffset = .4f;			//distancia desde el centro a cada pie
+	public float groundDistance = .2f;		//distancia del rayo desde los pies al suelo
+	public float headClearance = .5f;		//distancia desde la cabeza para considerar que no esta bloqueada
+	
+	[Header ("Status Flags")]
+	public bool isOnGround;
+	public bool isJumping;
+	public bool isCrouching;
+	public bool isHeadBlocked;
+	
+	PlayerInput input;						//Hacemos referencia al controlador de los inputs del Player
+	BoxCollider2D bodyCollider;
+	Rigidbody2D rigidBody;
+	
+	float coyoteTime;						//tiempo
+	
+	int direction = 1;
+	
+	
+	void Start()
+	{
+		input = GetComponent<PlayerInput>();
+		rigidBody = GetComponent<Rigidbody2D>();
+		bodyCollider = GetComponent<BoxCollider2D>();
+	}
+	
+	
+	void FixedUpdate()
+	{
+		//Check the environment to determine status
+		PhysicsCheck();
+
+		//Process ground and air movements
+		GroundMovement();		
+		MidAirMovement();
+	}
+	
+	
+	void PhysicsCheck()
+	{
+		//empezamos asumiendo que el Player no esta sobre el suelo y no tiene la cabeza bloqueada
+		isOnGround = false;
+		isHeadBlocked = false;
+
+		//Casteamos los rayos de los pies para comprobar si tocamos suelo
+		RaycastHit2D leftCheck = Raycast(new Vector2(-footOffset, 0f), Vector2.down, groundDistance);
+		RaycastHit2D rightCheck = Raycast(new Vector2(footOffset, 0f), Vector2.down, groundDistance);
+
+		if (leftCheck || rightCheck)
+			isOnGround = true;
+
+		//Casteamos el rayo para ver si la cabeza esta bloqueada por arriba
+		//como el pivote se situa abajo donde los pies del Player, con bodyCollider.size.y obtenemos
+		//el borde superior de Collider
+		RaycastHit2D headCheck = Raycast(new Vector2(0f, bodyCollider.size.y), Vector2.up, headClearance);
+
+		if (headCheck)
+			isHeadBlocked = true;
+
+	}
+	
+	
+	void GroundMovement()
+	{
+		//si pulsamos la tecla de agachar y no estamos agachados y si estamos sobre el suelo nos agachamos
+		if (input.crouchHeld && !isCrouching && isOnGround)
+			Crouch();
+		//sino si no hemos pulsado la tecla de agachar y estamos agachados nos levantamos
+		else if (!input.crouchHeld && isCrouching)
+			StandUp();
+		//sino si no estamos sobre el suelo y estamos agachados nos levantamos
+		else if (!isOnGround && isCrouching)
+			StandUp();
+
+		//Calculamos la velocidad deseada segun los Inputs
+		float xVelocity = speed * input.horizontal;
+
+		//si el signo de la velocidad y la direccion no son iguales cambiamos de direccion
+		if (xVelocity * direction < 0f)
+			FlipCharacterDirection();
+
+		if (isCrouching)
+			xVelocity /= crouchSpeedDivisor;
+
+		//aplicamos la velocidad deseada
+		rigidBody.velocity = new Vector2(xVelocity, rigidBody.velocity.y);
+
+		//si el Player esta sobre el suelo extendemos el tiempo de espera para poder volver a saltar
+		if (isOnGround)
+			coyoteTime = Time.time + coyoteDuration;
+	}
+}
