@@ -1,0 +1,41 @@
+// con este script hacemos que el Player rote en la direccion que esta mirando.
+// con el eje horizontal controlamos la direccion en el eje X, mover a izquierda y derecha.
+// con el eje vertical controlamos la direccion en el eje Z, mover hacia adelante y atrás.
+
+horizontal = Input.GetAxis("Horizontal");
+vertical = Input.GetAxis("Vertical");
+
+// normalizamos el vector direccion para que no vaya mas rapido al ir en diagonal
+
+Vector3 direction = new Vector3(horizontal, 0f, vertical).normalized;
+
+// debemos rotar el player en la direccion que esta caminando el player
+// para calcular la rotacion usaremos la funcion Mathf.Atan2 que devuelve el angulo entre el eje X
+// y un vector dado (x,y), pero en Unity el angulo 0 se corresponde con el eje Z (forward)
+// por lo que debemos dar la vuelta a fórmula y poner primero la coordenada X.
+// la funcion devuelve el angulo en radianes, hay que pasarlo a grados.
+// Ademas queremos que al girar la cámara el player rote hacia donde esta mirando la camara, para
+// ello hay que sumarle la rotacion en y de la camara.
+
+float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + cam.eulerAngles.y;
+
+// antes de rotar el player vamos a suavizar el movimiento de rotacion
+float turnSmoothTime = 0.02f;
+float turnSmoothVelocity;  // esta variable la usa la funcion Mathf.SmoothDampAngle para ir calculando el angulo
+
+angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+
+// ademas de rotar el player hacia donde mira la camara debemos cambiar el Vector direction
+// para que apunte tambien a donde mira la camara, esto lo conseguimos multiplicando el Vector.forward
+// por la rotacion calculada
+
+moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+
+// por último en el FixedUpdate() aplicaremos la rotación y la dirección al Rigidbody
+
+void FixedUpdate()
+{
+  rb.rotation = Quaternion.Euler(0f, angle, 0f);
+  rb.MovePosition(rb.position + (moveDir.normalized * speed * Time.fixedDeltaTime));
+}
+
