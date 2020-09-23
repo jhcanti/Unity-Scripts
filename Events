@@ -2,5 +2,23 @@
 using System;
 
 //dentro de la clase que va a generar el evento lo declaramos asi
-//donde podemos pasar un parámetro
-public event Action<bool> OnEventFired;
+//donde debemos indicar el tipo de los parametros, si los hay
+public event Action<bool, int> OnScoreChanged;
+
+//para disparar el evento usamos, pasando los parametros que queramos
+OnEventFired?.Invoke(true, 100);
+
+//en el resto de clases que queramos que se subscriban al evento debemos
+//meter una referencia al objeto que dispara el evento, por ejemplo, el 
+//Player
+public Player player;
+
+//y nos subscribimos al evento en el metodo Start, Awake, OnEnable...
+player.OnScoreChanged += HandleScore;
+
+//definimos la funcion HandleScore que se ejecutará al dispararse el evento
+//debe tener la misma declaracion que el evento
+void HandleScore(bool activo, int _score)
+{
+  //aqui reemplazariamos el texto del marcador
+}
