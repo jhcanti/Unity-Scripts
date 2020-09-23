@@ -1,0 +1,6 @@
+//para declarar un evento de la forma de C# necesitamos el namespace System
+using System;
+
+//dentro de la clase que va a generar el evento lo declaramos asi
+//donde podemos pasar un parámetro
+public event Action<bool> OnEventFired;
