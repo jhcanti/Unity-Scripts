@@ -1,0 +1,38 @@
+//ejemplo util de implementacion de una Interface para dañar a un enemigo del tipo que sea
+
+//definimos la Interface
+public interface IDamageble
+{
+    void Damage();
+}
+
+//las interfaces pueden declarar funciones pero sin incluir ningun codigo dentro
+
+//despues un enemigo que quisiera ser dañado heredaria la interface
+public class Troll : MonoBehaviour, IDamageble
+{
+    public void Damage()
+    {
+        Debug.Log("Troll herido");
+    }
+}
+
+//hariamos lo mismo en todos los enemigos o clases que pudiesen recibir daño
+public class Orco : MonoBehaviour, IDamageble
+{
+    public void Damage()
+    {
+        Debug.Log("Orco herido");
+    }
+}
+
+//por ultimo en la clase del proyectil o el gameobject que causara el daño
+//podriamos detectar una colision con el objeto dañable
+private void OnTriggerEnter2D(Collider2D collision)
+{    
+    IDamageble damageable = collision.GetComponent<IDamageble>();
+    if (damageable != null)
+        damageable.Damage();
+}
+    
+    
