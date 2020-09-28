@@ -1,0 +1,72 @@
+/*
+    Ejemplo de clase que ejecuta una accion al acabar un temporizador
+*/
+using System;
+using UnityEngine;
+
+public class ActionOnTimer : MonoBehaviour
+{
+    // definimos un Delegate que sera el encargado de ejecutar
+    // la accion al terminar el tiempo
+    Action timerCallback;
+
+    float timer;
+
+    // recibimos el tiempo y la accion a ejecutar
+    public void SetTimer(float timer, Action accion)
+    {
+        this.timer = timer;
+        timerCallback = accion;
+    }
+
+
+    private void Update()
+    {
+        if (timer > 0f)
+        {
+            timer -= Time.deltaTime;
+            if (isTimerEnd())
+            {
+                // una vez finalizado el tiempo lanzamos la accion
+                timerCallback();
+            }
+        }
+        
+    }
+
+    public bool isTimerEnd()
+    {
+        return timer <= 0;
+    }
+}
+
+
+/*
+  Desde la clase que queramos utilizarlo pondriamos
+*/
+
+public class Testing : MonoBehaviour
+{
+    // referencia a la clase
+    public ActionOnTimer actionOnTimer;    
+
+    private void Start()
+    {
+        // le pasamos el tiempo y la accion a ejecutar a modo de funcion
+        // entre { }
+        actionOnTimer.SetTimer(3f, () => { Debug.Log("Time Complete !!!"); });
+        
+        // se podrian ejecutar varias lineas como si de una funcion cualquiera
+        // se tratate
+        actionOnTimer.SetTimer(3f, () => {
+            Debug.Log("Se pueden ejecutar varias lineas");
+            Debug.Log("Incluso llamar a otra funcion.");
+            OtraFuncion();
+        }
+    }
+    
+    void OtraFuncion()
+    {
+        Debug.Log("Imprimo desde otra funcion");
+    }
+}
