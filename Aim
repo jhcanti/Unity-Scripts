@@ -1,0 +1,45 @@
+// Script para apuntar un gameobject hacia la posicion del ratón
+// el sprite del arma debe dibujarse apuntando hacia la derecha
+// pues los angulos en Unity empiezan en el eje Y = 0, X > 0
+// es decir, a las 3 en punto y luego el angulo va aumentando
+// en la direccion contraria a las agujas del reloj:
+// a las 12 serian 90 grados y a las 9 serian 180 grados.
+
+using UnityEngine;
+
+public class Aim : MonoBehaviour
+{
+    public Camera cam;
+    public SpriteRenderer rend;
+    Vector3 mousePos;
+    Vector3 aimDirection;
+    float dir = 1;
+
+    
+    void Update()
+    {
+        mousePos = GetMousePosition();
+        aimDirection = (mousePos - transform.position).normalized;
+
+        //tenemos que convertir el vector aim en un Euler angle, para ello utilizamos
+        float angle = Mathf.Atan2(aimDirection.y, aimDirection.x) * Mathf.Rad2Deg;
+
+        transform.eulerAngles = new Vector3(0, 0, angle);
+        if ((aimDirection.x > 0 && dir != 1) || (aimDirection.x < 0 && dir == 1))
+            Flip();
+    }
+
+
+    Vector3 GetMousePosition()
+    {
+        return cam.ScreenToWorldPoint(Input.mousePosition);
+    }
+
+    void Flip()
+    {
+        Vector3 scale = transform.localScale;
+        scale.y *= -1;
+        transform.localScale = scale;
+        dir *= -1;
+    }
+}
