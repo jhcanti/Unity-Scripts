@@ -1,0 +1,36 @@
+/*
+    C# incluye dos tipos de Delegates muy utiles dentro
+    del NameSpace System
+*/
+
+using System;
+using UnityEngine;
+
+public class BuildInDelegate : MonoBehaviour
+{
+    // el tipo Action es un Delegado que no devuelve nada
+    // y se pueden definir parametros de tipo Generic o ninguno
+    public Action<int, float> testIntFloatAction;
+    public Action testAction;
+
+    // el otro tipo se llama Func y retorna un tipo Generic
+    // y puede incluir varios parametros de tipo Generic
+    // el ultimo tipo Generic es el valor devuelto
+    public Func<int,int,int> greaterFunc;
+
+
+    private void Start()
+    {
+        // asignamos e implementamos la funcion asociada que tiene
+        // parametros y no devuelve nada
+        testIntFloatAction = (int a, float b) => { Debug.Log(b * a); };
+
+        // lo mismo para el tipo Func, no incluye parametros y devuelve
+        // un Generic, en este caso bool
+        greaterFunc = (int a, int b) => { return a > b ? a : b; };
+
+        // lanzamos las funciones
+        testIntFloatAction(2, 2.5f);
+        Debug.Log(greaterFunc(5, 8));        
+    }    
+}
