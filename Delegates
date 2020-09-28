@@ -1,0 +1,45 @@
+/*
+    Los Delegates son como declaraciones de funciones que pueden recibir
+    y devolver argumentos pero que no tienen nada implementado.
+    Posteriormente un objeto puede referenciar a una función de tenga la
+    misma firma (declaracion) que el Delegate
+*/
+
+using UnityEngine;
+
+public class Delegates : MonoBehaviour
+{
+    // para definir un Delegate ponemos la clausula delegate justo antes
+    // del tipo de retorno de la funcion
+    public delegate void TestDelegate();
+
+    // creamos el objeto del tipo del Delegate que acabamos de crear
+    public TestDelegate testDelegateFunction;
+
+    // este objeto puede hacer referencia a cualquier funcion que tenga
+    // la misma declaracion que el Delegate mediante una asignacion
+    private void Start()
+    {
+        testDelegateFunction = UnaFuncion;
+
+        // para ejecutar la funcion simplemente llamar al objeto como
+        // si fuera la funcion
+        testDelegateFunction();
+
+        testDelegateFunction = OtraFuncion;
+        testDelegateFunction();
+    }
+
+
+    // una función que tiene la misma firma que el Delegate
+    public void UnaFuncion()
+    {
+        Debug.Log("LLamada a la función UnaFuncion");
+    }
+
+    // otra función que tiene la misma firma que el Delegate
+    public void OtraFuncion()
+    {
+        Debug.Log("LLamada a la función OtraFuncion");
+    }
+}
