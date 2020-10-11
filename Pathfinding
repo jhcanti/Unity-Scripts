@@ -1,0 +1,271 @@
+using System.Collections;
+using System.Collections.Generic;
+using System;
+using UnityEngine;
+using UnityEngine.Tilemaps;
+
+public class Pathfinding : Singleton<Pathfinding>
+{
+    int width = 15;
+    int height = 9;
+    PathNode[,] gridArray;
+
+    public Tilemap tilemap;
+    public Transform player;
+    public Transform enemy;
+
+    private List<PathNode> openList;
+    private List<PathNode> closedList;
+
+
+    private void Start()
+    {
+        gridArray = new PathNode[width, height];
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                gridArray[x, y] = new PathNode(x, y);
+            }
+        }
+
+        SetNotWalkableNodes();
+    }
+
+
+    public List<PathNode> FindPath(int startX, int startY, int endX, int endY)
+    {
+        PathNode startNode = gridArray[startX, startY];
+        PathNode endNode = gridArray[endX, endY];
+
+        openList = new List<PathNode> { startNode };
+        closedList = new List<PathNode>();
+
+
+        // para inicializar nuestro Grid debemos recorrer todos los nodos y poner
+        // el gCost = infinito y calcular su fCost
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                PathNode pathNode = gridArray[x, y];
+                pathNode.gCost = int.MaxValue;
+                pathNode.CalculateFCost();
+                pathNode.cameFromNode = null;
+            }
+        }
+
+        // ahora calculamos el coste de nuestro startNode
+        startNode.gCost = 0;
+        startNode.hCost = CalculateDistanceCost(startNode, endNode);
+        startNode.CalculateFCost();
+
+        // despues hacemos un bucle que calcule el coste de todos los nodos hasta
+        // encontrar el endNode o que nuestra lista abierta de nodos este vacia
+        while (openList.Count > 0)
+        {
+            // nuestro currentNode será el de menor fCost de todos los nodos
+            // de nuestra openList
+            PathNode currentNode = GetLowestFCostNode(openList);
+
+            // si el currentNode es el ultimo devolvemos el camino
+            if (currentNode == endNode)
+            {
+                // devolver el path
+                return CalculatePath(endNode);
+            }
+
+            // sino eliminamos de la openList el currentNode y lo
+            // añadimos a la closedList
+            openList.Remove(currentNode);
+            closedList.Add(currentNode);
+
+            // ahora recorremos todos los nodos vecinos al currentNode
+            foreach (PathNode neighbourNode in GetNeighbourList(currentNode))
+            {
+                // primero comprobamos si es un nodo que ya hemos analizado
+                if (closedList.Contains(neighbourNode))
+                {
+                    continue;
+                }
+
+                // segundo comprobamos si el nodo no es un muro
+                if (!neighbourNode.isWalkable)
+                {
+                    closedList.Add(neighbourNode);
+                    continue;
+                }
+
+                // el gCost del vecino sera el del currentNode mas la distancia
+                // entre el currentNode y el vecino
+                int tentativeGCost = currentNode.gCost + CalculateDistanceCost(currentNode, neighbourNode);
+
+                // como hemos reseteado todos los nodos con gCost a infinito esto
+                // actualizara el gCost en el vecino
+                if (tentativeGCost < neighbourNode.gCost)
+                {
+                    neighbourNode.cameFromNode = currentNode;
+                    neighbourNode.gCost = tentativeGCost;
+                    neighbourNode.hCost = CalculateDistanceCost(neighbourNode, endNode);
+                    neighbourNode.CalculateFCost();
+
+                    // añadimos el vecino a la openList si no lo estaba ya
+                    if (!openList.Contains(neighbourNode))
+                    {
+                        openList.Add(neighbourNode);
+                    }
+                }
+            }
+        }
+
+        // si hemos recorrido todos los nodos y aun asi no hemos encontrado el endNode
+        return null;
+    }
+
+
+    private List<PathNode> GetNeighbourList(PathNode currentNode)
+    {
+        List<PathNode> neighbourList = new List<PathNode>();
+
+        if (currentNode.cellX - 1 >= 0)
+        {
+            // si no se sale del Grid obtenemos el nodo de la izquierda
+            neighbourList.Add(GetNode(currentNode.cellX - 1, currentNode.cellY));
+        }
+
+        if (currentNode.cellX + 1 < width)
+        {
+            // si no se sale del Grid obtenemos el nodo de la derecha
+            neighbourList.Add(GetNode(currentNode.cellX + 1, currentNode.cellY));
+        }
+
+        if (currentNode.cellY - 1 >= 0)
+        {
+            // si no se sale del Grid obtenemos el nodo de abajo
+            neighbourList.Add(GetNode(currentNode.cellX, currentNode.cellY - 1));
+        }
+
+        if (currentNode.cellY + 1 < height)
+        {
+            // si no se sale del Grid obtenemos el nodo de arriba
+            neighbourList.Add(GetNode(currentNode.cellX, currentNode.cellY + 1));
+        }
+
+        return neighbourList;
+    }
+
+
+    private PathNode GetNode(int x, int y)
+    {
+        return gridArray[x, y];
+    }
+
+
+    private List<PathNode> CalculatePath(PathNode endNode)
+    {
+        List<PathNode> path = new List<PathNode>();
+
+        path.Add(endNode);
+        PathNode currentNode = endNode;
+
+        while (currentNode.cameFromNode != null)
+        {
+            path.Add(currentNode.cameFromNode);
+            currentNode = currentNode.cameFromNode;
+        }
+
+        path.Reverse();
+        return path;
+    }
+
+
+    private int CalculateDistanceCost(PathNode a, PathNode b)
+    {
+        int xDistance = Mathf.Abs(a.cellX - b.cellX);
+        int yDistance = Mathf.Abs(a.cellY - b.cellY);
+        return xDistance + yDistance;
+    }
+
+
+    private PathNode GetLowestFCostNode(List<PathNode> pathNodeList)
+    {
+        PathNode lowestFCostNode = pathNodeList[0];
+        for (int i = 1; i < pathNodeList.Count; i++)
+        {
+            if (pathNodeList[i].fCost < lowestFCostNode.fCost)
+            {
+                lowestFCostNode = pathNodeList[i];
+            }
+        }
+        return lowestFCostNode;
+    }
+
+
+    public void DrawPath(List<PathNode> path)
+    {
+        PathNode currentNode = path[0];
+
+        // recorremos el path creando una linea del centro de cada nodo al siguiente
+        for (int i = 1; i < path.Count; i++)
+        {
+            PathNode nextNode = path[i];
+
+            Vector3Int cellOrigin = GetArrayToTilemap(new Vector3Int(currentNode.cellX, currentNode.cellY, 0));
+            Vector3 start = GetCellCenterWorld(cellOrigin);
+
+            Vector3Int cellEnd = GetArrayToTilemap(new Vector3Int(nextNode.cellX, nextNode.cellY, 0));
+            Vector3 end = GetCellCenterWorld(cellEnd);
+            
+            Debug.DrawLine(start, end, Color.green, 1f);
+
+            currentNode = nextNode;
+        }
+    }
+
+
+    public Vector3 GetCellCenterWorld(Vector3Int cell)
+    {
+        return tilemap.GetCellCenterWorld(cell);
+    }
+
+
+    public Vector3Int GetArrayToTilemap(Vector3Int cell)
+    {
+        return new Vector3Int(cell.x - 8, cell.y - 5, 0);
+    }
+
+
+    public Vector3Int GetTilemapToArray(Vector3Int cell)
+    {
+        return new Vector3Int(cell.x + 8, cell.y + 5, 0);
+    }
+
+
+    public Vector3Int GetWorldToCell(Vector3 position)
+    {
+        return tilemap.WorldToCell(position);
+    }
+
+
+    private void SetNotWalkableNodes()
+    {
+        // recorremos todas las casillas del Tilemap y si es un muro marcamos
+        // el nodo equivalente como no walkable
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                // convertimos la celda del gridArray al tilemap
+                Vector3Int cell = GetArrayToTilemap(new Vector3Int(x, y, 0));
+
+                // comprobamos el Tile, si es null significa que es un camino
+                if (tilemap.GetTile(cell) == null)
+                {
+                    gridArray[x, y].isWalkable = true;
+                }
+            }
+        }
+    }
+    
+}
